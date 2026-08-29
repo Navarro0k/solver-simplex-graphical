@@ -149,10 +149,5 @@ def graphic_solver(restrictions, c1, c2, optimization_type="max"):
     return vertices, best_value, fig
 
 
-def simplex_solver(restrictions, objective_coefficients, optimization_type="max"):
-    raise NotImplementedError("El método Simplex aún no ha sido implementado.")
 
-if __name__ == "__main__":
-    mis_restricciones = [(2, 1, "<=", 8), (1, 2, "<=", 7), (0, 1, ">=", 3)]
-    puntos_encontrados, resultado, figura = graphic_solver(mis_restricciones, c1=3, c2=5, optimization_type="max")
-    plt.show() # Para pruebas sin GUI externa
+

@@ -1,5 +1,11 @@
 """
-Interfaz gráfica para el solucionador de Programación Lineal (Versión Final).
+Interfaz gráfica para el solucionador de Programación Lineal.
+Carga por defecto el problema:
+    Max Z = 2x₁ + x₂
+    s.a.
+        x₁ ≥ 3          ->  1x₁ + 0x₂ ≥ 3
+        x₂ - 2x₁ ≥ 0    -> -2x₁ + 1x₂ ≥ 0
+        40x₁ + 30x₂ ≤ 600
 """
 
 import tkinter as tk
@@ -7,8 +13,10 @@ from tkinter import ttk, messagebox
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
 
-from graphic_solver import graphic_solver, simplex_solver, generate_explanation_steps
+from graphic_solver import graphic_solver, generate_explanation_steps
+from simplex_solver import simplex_solver, graficar_tableau, generateSimplexSteps
 
 # Constantes de Estilo
 COLOR_FONDO, COLOR_TARJETA, COLOR_PRIMARIO = "#f4f6f8", "#ffffff", "#1a3c6e"
@@ -41,9 +49,15 @@ class AplicacionProgramacionLineal:
         self.textos_pasos = []
         self.paso_actual = 0
 
+        # Estado específico del método Simplex: cada entrada es (matriz, pivote, fase)
+        self.pasos_simplex = []
+        self.restricciones_actuales = None
+        self.objetivo_actual = None
+
         self._configurar_estilos()
         self._construir_interfaz()
-        self._regenerar_formulario()
+        # Cargar modelo por defecto al iniciar
+        self._regenerar_formulario(cargar_defecto=True)
 
     def _configurar_estilos(self):
         estilo = ttk.Style()
@@ -150,12 +164,13 @@ class AplicacionProgramacionLineal:
         self.etiqueta_aviso_metodo = ttk.Label(tarjeta, text="", style="Aviso.TLabel")
         self.etiqueta_aviso_metodo.pack(side="left", padx=(15, 0))
 
-    def _crear_entradas_variables(self, contenedor):
+    def _crear_entradas_variables(self, contenedor, valores_defecto=None):
         entradas = []
         cantidad = self.num_variables.get()
         for i in range(cantidad):
             entrada = ttk.Entry(contenedor, width=6, justify="center")
-            entrada.insert(0, "1")
+            val = "1" if valores_defecto is None or i >= len(valores_defecto) else str(valores_defecto[i])
+            entrada.insert(0, val)
             entrada.pack(side="left")
             ttk.Label(contenedor, text=f"x{SUBINDICES[i]}", style="Tarjeta.TLabel").pack(side="left", padx=(3, 4))
             if i < cantidad - 1:
@@ -163,14 +178,23 @@ class AplicacionProgramacionLineal:
             entradas.append(entrada)
         return entradas
 
-    def _regenerar_formulario(self):
+    def _regenerar_formulario(self, cargar_defecto=False):
         for widget in self.frame_obj_vars.winfo_children(): widget.destroy()
         ttk.Label(self.frame_obj_vars, text="Z =", style="Tarjeta.TLabel").pack(side="left", padx=(0, 6))
-        self.entradas_objetivo = self._crear_entradas_variables(self.frame_obj_vars)
 
         for fila in self.filas_restricciones: fila["frame"].destroy()
         self.filas_restricciones.clear()
-        self._agregar_fila_restriccion()
+
+        # Si es la carga inicial (o reset con 2 vars), inserta el problema Z = 2x1 + x2 s.a. x1>=3, -2x1+x2>=0, 40x1+30x2<=600
+        if cargar_defecto and self.num_variables.get() == 2:
+            self.tipo_optimizacion.set("max")
+            self.entradas_objetivo = self._crear_entradas_variables(self.frame_obj_vars, valores_defecto=[2, 1])
+            self._agregar_fila_restriccion(coefs=[1, 0], signo=">=", cte_val=3)
+            self._agregar_fila_restriccion(coefs=[-2, 1], signo=">=", cte_val=0)
+            self._agregar_fila_restriccion(coefs=[40, 30], signo="<=", cte_val=600)
+        else:
+            self.entradas_objetivo = self._crear_entradas_variables(self.frame_obj_vars)
+            self._agregar_fila_restriccion()
         
         es_multivariable = self.num_variables.get() > 2
         self.radio_grafico.configure(state="disabled" if es_multivariable else "normal")
@@ -179,18 +203,18 @@ class AplicacionProgramacionLineal:
             
         self._limpiar_resultados()
 
-    def _agregar_fila_restriccion(self):
+    def _agregar_fila_restriccion(self, coefs=None, signo="<=", cte_val=0):
         frame = ttk.Frame(self.frame_filas_rest, style="Tarjeta.TFrame")
         frame.pack(fill="x", pady=3)
 
-        entradas = self._crear_entradas_variables(frame)
+        entradas = self._crear_entradas_variables(frame, valores_defecto=coefs)
         
         combo = ttk.Combobox(frame, values=["<=", ">="], width=4, state="readonly", justify="center")
-        combo.set("<=")
+        combo.set(signo)
         combo.pack(side="left", padx=(5, 10))
 
         cte = ttk.Entry(frame, width=8, justify="center")
-        cte.insert(0, "0")
+        cte.insert(0, str(cte_val))
         cte.pack(side="left", padx=(0, 10))
 
         fila = {"frame": frame, "coeficientes": entradas, "signo": combo, "constante": cte}
@@ -221,7 +245,12 @@ class AplicacionProgramacionLineal:
 
         panel_exp = ttk.Frame(panel, style="Tarjeta.TFrame", padding=15)
         panel_exp.grid(row=1, column=0, sticky="nsew")
-        ttk.Label(panel_exp, text="Explicación Paso a Paso", style="Seccion.TLabel").pack(anchor="w", pady=(0, 5))
+
+        frame_encabezado_exp = ttk.Frame(panel_exp, style="Tarjeta.TFrame")
+        frame_encabezado_exp.pack(fill="x", pady=(0, 5))
+        ttk.Label(frame_encabezado_exp, text="Explicación Paso a Paso", style="Seccion.TLabel").pack(side="left")
+        self.etiqueta_fase = ttk.Label(frame_encabezado_exp, text="", style="Seccion.TLabel")
+        self.etiqueta_fase.pack(side="right")
         
         self.texto_explicacion = tk.Text(panel_exp, height=6, font=("Consolas", 11), bg=COLOR_FONDO, relief="flat", wrap="word", state="disabled")
         self.texto_explicacion.pack(fill="both", expand=True, pady=5)
@@ -234,7 +263,7 @@ class AplicacionProgramacionLineal:
     # =========================================================
     def _leer_datos(self):
         c_obj = [float(e.get()) for e in self.entradas_objetivo]
-        rest = [( [float(e.get()) for e in f["coeficientes"]], f["signo"].get(), float(f["constante"].get()) ) for f in self.filas_restricciones]
+        rest = [([float(e.get()) for e in f["coeficientes"]], f["signo"].get(), float(f["constante"].get())) for f in self.filas_restricciones]
         return c_obj, rest
 
     def _resolver(self):
@@ -248,14 +277,11 @@ class AplicacionProgramacionLineal:
         if self.metodo_solucion.get() == "grafico":
             self._procesar_grafico(c_obj, rest)
         else:
-            self._mostrar_texto_simple("El método Simplex aún está en desarrollo.")
+            self._procesar_simplex(c_obj, rest)
 
     def _procesar_grafico(self, c_obj, rest):
         c1 = c_obj[0]
-        if len(c_obj) > 1:
-            c2 = c_obj[1]
-        else:
-            c2 = 0
+        c2 = c_obj[1] if len(c_obj) > 1 else 0
             
         rest_2d = []
         for r in rest:
@@ -264,11 +290,7 @@ class AplicacionProgramacionLineal:
             constante = r[2]
             
             a = coeficientes[0]
-            if len(coeficientes) > 1:
-                b = coeficientes[1]
-            else:
-                b = 0
-                
+            b = coeficientes[1] if len(coeficientes) > 1 else 0
             rest_2d.append((a, b, operador, constante))
 
         try:
@@ -286,30 +308,96 @@ class AplicacionProgramacionLineal:
         self.boton_siguiente.configure(state="normal")
         self._avanzar_paso()
 
-    def _renderizar_canvas(self, fig):
-        self.lbl_grafico_vacio.place_forget()
-        canvas_grafico = FigureCanvasTkAgg(fig, master=self.panel_grafico)
-        canvas_grafico.draw()
-        canvas_grafico.get_tk_widget().pack(fill="both", expand=True)
+    def _procesar_simplex(self, c_obj, rest):
+        pasos = []
+        iteracion = 0
+        while True:
+            try:
+                # RECIBE 4 VARIABLES AHORA
+                matriz, pivote, fase, basicas = simplex_solver(rest, c_obj, self.tipo_optimizacion.get(), iteracion)
+            except ValueError as e:
+                return messagebox.showerror("Sin solución", str(e))
+
+            pasos.append((matriz, pivote, fase, basicas))
+            if pivote is None:
+                break
+            iteracion += 1
+
+        self.pasos_simplex = pasos
+        self.restricciones_actuales = rest
+        self.objetivo_actual = c_obj
+        
+        # EL HISTORIAL QUE SE ENVÍA AHORA CONTIENE LA LISTA DE LAS 4 VARIABLES
+        self.textos_pasos = generateSimplexSteps(pasos, rest, c_obj)
+
+        self.boton_siguiente.configure(state="normal")
+        self._avanzar_paso()
 
     def _avanzar_paso(self):
-        self.texto_explicacion.configure(state="normal")
-        if self.paso_actual < len(self.textos_pasos):
-            self.texto_explicacion.insert(tk.END, self.textos_pasos[self.paso_actual])
-            self.paso_actual += 1
+        if self.paso_actual >= len(self.textos_pasos):
+            return
 
+        if self.metodo_solucion.get() == "simplex":
+            # DESEMPAQUETA LA NUEVA VARIABLE
+            matriz, pivote, fase, basicas = self.pasos_simplex[self.paso_actual]
+            
+            # ENVÍA LA VARIABLE A LA FUNCIÓN DEL TABLEAU
+            fig = graficar_tableau(matriz, pivote, fase, self.restricciones_actuales, self.objetivo_actual, basicas)
+            self._renderizar_canvas(fig)
+            self.etiqueta_fase.configure(text=f"Fase actual: {fase}")
+            self._mostrar_texto_simple(self.textos_pasos[self.paso_actual])
+        else:
+            self.texto_explicacion.configure(state="normal")
+            self.texto_explicacion.insert(tk.END, self.textos_pasos[self.paso_actual])
+            self.texto_explicacion.see(tk.END)
+            self.texto_explicacion.configure(state="disabled")
+
+        self.paso_actual += 1
         if self.paso_actual >= len(self.textos_pasos):
             self.boton_siguiente.configure(state="disabled")
 
-        self.texto_explicacion.see(tk.END)
-        self.texto_explicacion.configure(state="disabled")
+    def _renderizar_canvas(self, fig):
+        self.lbl_grafico_vacio.place_forget()
+        for widget in self.panel_grafico.winfo_children():
+            if widget != self.lbl_grafico_vacio:
+                widget.destroy()
 
+        canvas_grafico = FigureCanvasTkAgg(fig, master=self.panel_grafico)
+        canvas_grafico.draw()
+        canvas_grafico.get_tk_widget().pack(fill="both", expand=True)
+        plt.close(fig)
+
+    def _avanzar_paso(self):
+        if self.paso_actual >= len(self.textos_pasos):
+            return
+
+        if self.metodo_solucion.get() == "simplex":
+            matriz, pivote, fase, basicas = self.pasos_simplex[self.paso_actual]
+            
+            fig = graficar_tableau(matriz, pivote, fase, self.restricciones_actuales, self.objetivo_actual, basicas)
+            self._renderizar_canvas(fig)
+            self.etiqueta_fase.configure(text=f"Fase actual: {fase}")
+            self._mostrar_texto_simple(self.textos_pasos[self.paso_actual])
+        else:
+            self.texto_explicacion.configure(state="normal")
+            self.texto_explicacion.insert(tk.END, self.textos_pasos[self.paso_actual])
+            self.texto_explicacion.see(tk.END)
+            self.texto_explicacion.configure(state="disabled")
+
+        self.paso_actual += 1
+        if self.paso_actual >= len(self.textos_pasos):
+            self.boton_siguiente.configure(state="disabled")
+            
     def _limpiar_resultados(self):
         for widget in self.panel_grafico.winfo_children():
             if widget != self.lbl_grafico_vacio: widget.destroy()
         
         self.paso_actual = 0
         self.textos_pasos.clear()
+        self.pasos_simplex = []
+        self.restricciones_actuales = None
+        self.objetivo_actual = None
+        self.etiqueta_fase.configure(text="")
         self.boton_siguiente.configure(state="disabled")
         self._mostrar_texto_simple("")
         self.lbl_grafico_vacio.place(relx=0.5, rely=0.5, anchor="center")
