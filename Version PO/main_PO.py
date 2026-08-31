@@ -15,9 +15,12 @@ matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
-# --- Importación de las nuevas Clases ---
+# --- Importación de las Clases ---
+# Ya no necesitamos importar funciones de dibujo del simplex, 
+# las clases se encargan de todo internamente.
+from problem import LinearProblem
 from graphic_solver import GraphicSolver
-from simplex_solver import SimplexModel, graficar_tableau, generateSimplexSteps
+from simplex_solver import SimplexModel
 
 # Constantes de Estilo
 COLOR_FONDO, COLOR_TARJETA, COLOR_PRIMARIO = "#f4f6f8", "#ffffff", "#1a3c6e"
@@ -47,12 +50,11 @@ class AplicacionProgramacionLineal:
         
         self.entradas_objetivo = []
         self.filas_restricciones = []
-        self.textos_pasos = []
+        
+        # Nueva variable estandarizada para los pasos de cualquier solver
+        self.pasos_ui = []
         self.paso_actual = 0
-
-        self.pasos_simplex = []
-        self.restricciones_actuales = None
-        self.objetivo_actual = None
+        self.problema_actual = None
 
         self._configurar_estilos()
         self._construir_interfaz()
@@ -166,15 +168,25 @@ class AplicacionProgramacionLineal:
     def _crear_entradas_variables(self, contenedor, valores_defecto=None):
         entradas = []
         cantidad = self.num_variables.get()
+        
         for i in range(cantidad):
             entrada = ttk.Entry(contenedor, width=6, justify="center")
-            val = "1" if valores_defecto is None or i >= len(valores_defecto) else str(valores_defecto[i])
-            entrada.insert(0, val)
+            
+            # Reemplazo de operador ternario por if clásico
+            valor = "1"
+            if valores_defecto is not None:
+                if i < len(valores_defecto):
+                    valor = str(valores_defecto[i])
+                    
+            entrada.insert(0, valor)
             entrada.pack(side="left")
             ttk.Label(contenedor, text=f"x{SUBINDICES[i]}", style="Tarjeta.TLabel").pack(side="left", padx=(3, 4))
+            
             if i < cantidad - 1:
                 ttk.Label(contenedor, text="+", style="Tarjeta.TLabel").pack(side="left", padx=(0, 4))
+                
             entradas.append(entrada)
+            
         return entradas
 
     def _crear_fila_desplazable(self, padre, alto=34):
@@ -210,8 +222,11 @@ class AplicacionProgramacionLineal:
         return frame_interno
 
     def _regenerar_formulario(self, cargar_defecto=False):
-        for widget in self.frame_obj_vars.winfo_children(): widget.destroy()
-        for fila in self.filas_restricciones: fila["frame"].destroy()
+        for widget in self.frame_obj_vars.winfo_children(): 
+            widget.destroy()
+        for fila in self.filas_restricciones: 
+            fila["frame"].destroy()
+            
         self.filas_restricciones.clear()
 
         if cargar_defecto and self.num_variables.get() == 2:
@@ -225,9 +240,20 @@ class AplicacionProgramacionLineal:
             self._agregar_fila_restriccion()
         
         es_multivariable = self.num_variables.get() > 2
-        self.radio_grafico.configure(state="disabled" if es_multivariable else "normal")
-        self.metodo_solucion.set("simplex" if es_multivariable else self.metodo_solucion.get())
-        self.etiqueta_aviso_metodo.configure(text="Solo Simplex (>2 variables)." if es_multivariable else "")
+        
+        # Reemplazo de operadores ternarios en la configuración visual
+        estado_radio = "normal"
+        metodo_seleccionado = self.metodo_solucion.get()
+        texto_aviso = ""
+        
+        if es_multivariable:
+            estado_radio = "disabled"
+            metodo_seleccionado = "simplex"
+            texto_aviso = "Solo Simplex (>2 variables)."
+            
+        self.radio_grafico.configure(state=estado_radio)
+        self.metodo_solucion.set(metodo_seleccionado)
+        self.etiqueta_aviso_metodo.configure(text=texto_aviso)
             
         self._limpiar_resultados()
 
@@ -296,77 +322,53 @@ class AplicacionProgramacionLineal:
         except ValueError:
             return messagebox.showerror("Error", "Revisa que todos los campos tengan números válidos.")
 
-        self._limpiar_resultados()
-        
-        if self.metodo_solucion.get() == "grafico":
-            self._procesar_grafico(c_obj, rest)
-        else:
-            self._procesar_simplex(c_obj, rest)
+        try:
+            problema = LinearProblem(c_obj, rest, self.tipo_optimizacion.get())
+        except ValueError as e:
+            return messagebox.showerror("Error", str(e))
 
-    def _procesar_grafico(self, c_obj, rest):
-        c1 = c_obj[0]
-        c2 = c_obj[1] if len(c_obj) > 1 else 0
-            
-        # Formatear restricciones para el GraphicSolver
-        rest_2d = [(r[0][0], r[0][1] if len(r[0]) > 1 else 0, r[1], r[2]) for r in rest]
+        self._limpiar_resultados()
 
         try:
-            # Uso de la nueva clase GraphicSolver
-            modelo = GraphicSolver(rest_2d, c1, c2, self.tipo_optimizacion.get())
+            # responden al mismo contrato (resolver -> obtener_pasos_ui)
+            if self.metodo_solucion.get() == "grafico":
+                modelo = GraphicSolver(problema)
+            else:
+                modelo = SimplexModel(problema)
+                
             modelo.resolver()
+            self.pasos_ui = modelo.obtener_pasos_ui()
+
         except ValueError as e:
             self.lbl_grafico_vacio.place(relx=0.5, rely=0.5, anchor="center")
             return messagebox.showerror("Sin solución", str(e))
         
-        fig = modelo.plot_solution()
-        self.textos_pasos = modelo.generate_steps()
-        
-        self._renderizar_canvas(fig)
-        self.boton_siguiente.configure(state="normal")
-        self._avanzar_paso()
-
-    def _procesar_simplex(self, c_obj, rest):
-        try:
-            # Uso de la nueva clase SimplexModel
-            # Esto elimina el bucle 'while True' de la interfaz
-            modelo = SimplexModel(rest, c_obj, self.tipo_optimizacion.get())
-            self.pasos_simplex = modelo.resolver()
-        except ValueError as e:
-            return messagebox.showerror("Sin solución", str(e))
-
-        self.restricciones_actuales = rest
-        self.objetivo_actual = c_obj
-        self.textos_pasos = generateSimplexSteps(self.pasos_simplex)
-
         self.boton_siguiente.configure(state="normal")
         self._avanzar_paso()
 
     def _avanzar_paso(self):
-        if self.paso_actual >= len(self.textos_pasos):
+        # Protegemos contra desbordamientos
+        if self.paso_actual >= len(self.pasos_ui):
             return
 
-        if self.metodo_solucion.get() == "simplex":
-            paso = self.pasos_simplex[self.paso_actual]
-            
-            fig = graficar_tableau(
-                paso["matriz"], 
-                paso["pivote"], 
-                paso["fase"], 
-                paso["basicas"], 
-                paso["nombres"]
-            )
-            
-            self._renderizar_canvas(fig)
-            self.etiqueta_fase.configure(text=f"Fase actual: {paso['fase']}")
-            self._mostrar_texto_simple(self.textos_pasos[self.paso_actual])
-        else:
-            self.texto_explicacion.configure(state="normal")
-            self.texto_explicacion.insert(tk.END, self.textos_pasos[self.paso_actual])
-            self.texto_explicacion.see(tk.END)
-            self.texto_explicacion.configure(state="disabled")
+        # Obtenemos el diccionario con (texto, figura, titulo)
+        paso = self.pasos_ui[self.paso_actual]
 
+        # 1. Título
+        self.etiqueta_fase.configure(text=paso["titulo"])
+
+        # 2. Dibujo en Matplotlib (solo si el paso incluye figura nueva)
+        if paso["figura"] is not None:
+            self._renderizar_canvas(paso["figura"])
+
+        # 3. Texto en consola
+        self._mostrar_texto_simple(paso["texto"])
+
+        # Avanzar puntero
         self.paso_actual += 1
-        if self.paso_actual >= len(self.textos_pasos):
+        
+        # Deshabilitar botón si llegamos al final
+        if self.paso_actual >= len(self.pasos_ui):
             self.boton_siguiente.configure(state="disabled")
 
     def _renderizar_canvas(self, fig):
@@ -382,13 +384,13 @@ class AplicacionProgramacionLineal:
 
     def _limpiar_resultados(self):
         for widget in self.panel_grafico.winfo_children():
-            if widget != self.lbl_grafico_vacio: widget.destroy()
+            if widget != self.lbl_grafico_vacio: 
+                widget.destroy()
         
         self.paso_actual = 0
-        self.textos_pasos.clear()
-        self.pasos_simplex = []
-        self.restricciones_actuales = None
-        self.objetivo_actual = None
+        self.pasos_ui = []
+        self.problema_actual = None
+        
         self.etiqueta_fase.configure(text="")
         self.boton_siguiente.configure(state="disabled")
         self._mostrar_texto_simple("")
@@ -397,7 +399,11 @@ class AplicacionProgramacionLineal:
     def _mostrar_texto_simple(self, texto):
         self.texto_explicacion.configure(state="normal")
         self.texto_explicacion.delete("1.0", tk.END)
-        if texto: self.texto_explicacion.insert(tk.END, texto)
+        
+        if texto: 
+            self.texto_explicacion.insert(tk.END, texto)
+            
+        self.texto_explicacion.see(tk.END)
         self.texto_explicacion.configure(state="disabled")
 
 

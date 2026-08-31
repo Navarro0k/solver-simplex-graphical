@@ -1,15 +1,24 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+from problem import LinearProblem
+
 class SimplexModel:
     """
     Encapsula el estado y las operaciones del método Simplex de Dos Fases.
-    Elimina la necesidad de pasar la matriz y variables básicas entre funciones.
+    Recibe una instancia de LinearProblem (clase entidad).
     """
-    def __init__(self, restrictions, objective_coefficients, optimization_type):
+    def __init__(self, problem: LinearProblem):
+        if not isinstance(problem, LinearProblem):
+            raise TypeError("SimplexModel requiere una instancia de LinearProblem")
+
+        self.problem = problem
+        restrictions = problem.restrictions
+        objective_coefficients = problem.objective_coefficients
+
         self.num_restricciones = len(restrictions)
         self.num_variables = len(objective_coefficients)
-        self.optimization_type = optimization_type
+        self.optimization_type = problem.optimization_type
         self.objective_coefficients = objective_coefficients
 
         self.num_artificiales = sum(1 for _, op, _ in restrictions if op == ">=")
@@ -45,6 +54,7 @@ class SimplexModel:
                 self.tableau[fila, col_holgura_exceso] = 1
                 self.variables_basicas[i] = col_holgura_exceso
                 nombres_holgura.append(f"s{i+1}")
+                
             elif operador == ">=":
                 self.tableau[fila, col_holgura_exceso] = -1 
                 self.tableau[fila, col_artificial_actual] = 1 
@@ -133,7 +143,6 @@ class SimplexModel:
         else:
             self.tableau[0, :self.num_variables] = np.array(self.objective_coefficients)
 
-        # Recuperar los ceros de las variables básicas en la fila Z
         for i in range(self.num_restricciones):
             col = self.variables_basicas[i]
             coeficiente_z = self.tableau[0, col]
@@ -155,73 +164,43 @@ class SimplexModel:
             self._fase1()
 
         self._fase2()
-        self._guardar_estado(fase=2, pivote=None) # Último guardado indicando estado óptimo
+        self._guardar_estado(fase=2, pivote=None)
         return self.historial
 
-
-# =====================================================================
-# FACHADA Y MÉTODOS DE PRESENTACIÓN (Single Responsibility Principle)
-# =====================================================================
-
-def simplex_solver(restrictions, objective_coefficients, optimization_type="max", iteration=0):
-    """
-    Función puente para la interfaz gráfica. Instancia el modelo y extrae la iteración deseada.
-    """
-    modelo = SimplexModel(restrictions, objective_coefficients, optimization_type)
-    historial = modelo.resolver()
-    
-    estado = historial[iteration] if iteration < len(historial) else historial[-1]
-    return estado["matriz"], estado["pivote"], estado["fase"], estado["basicas"], estado["nombres"]
-
-def graficar_tableau(matriz, pivote, fase, basicas, nombres):
-    indices_mantener = [i for i, nom in enumerate(nombres) if not (fase == 2 and nom.startswith('a'))]
-    etiquetas_columnas = [nombres[i] for i in indices_mantener]
-    
-    matriz_filtrada = matriz[:, indices_mantener]
-    etiquetas_filas = ["Z"] + [nombres[b] for b in basicas]
-    texto_celdas = [[f"{v:.2f}" for v in fila] for fila in matriz_filtrada]
-
-    fig, ax = plt.subplots(figsize=(min(1.3 * len(etiquetas_columnas), 10), 0.6 * matriz_filtrada.shape[0] + 1.5))
-    ax.axis("off")
-
-    tabla = ax.table(cellText=texto_celdas, colLabels=etiquetas_columnas, rowLabels=etiquetas_filas, cellLoc="center", loc="center")
-    tabla.set_fontsize(10)
-    tabla.scale(1, 1.6)
-
-    if pivote:
-        fila_pivote, columna_pivote = pivote
-        if columna_pivote in indices_mantener:
-            celda = tabla[(fila_pivote + 1, indices_mantener.index(columna_pivote))]
-            celda.set_facecolor("#ffd54f")
-            celda.set_edgecolor("black")
-            celda.set_linewidth(2)
-    else:
-        indice_rhs = len(etiquetas_columnas) - 1
-        for i, etiqueta in enumerate(etiquetas_filas):
-            if etiqueta.startswith("x") or etiqueta == "Z":
-                tabla[(i + 1, -1)].set_facecolor("#a1f0a3")
-                tabla[(i + 1, indice_rhs)].set_facecolor("#a1f0a3")
-
-    ax.set_title(f"Fase {fase} — {'Solución óptima' if not pivote else 'Elemento pivote resaltado'}", fontsize=12, fontweight="bold", color="#1a3c6e")
-    fig.tight_layout()
-    return fig
-
-def generateSimplexSteps(historial):
-    textos = []
-    for indice, paso in enumerate(historial):
-        matriz, pivote, fase, basicas, nombres = paso["matriz"], paso["pivote"], paso["fase"], paso["basicas"], paso["nombres"]
+    def obtener_pasos_ui(self):
+        """
+        Empaqueta el historial del Simplex generando los textos y las figuras internamente.
+        Reemplaza la antigua función suelta 'generateSimplexSteps'.
+        """
+        pasos_estandarizados = []
         
-        texto = f"Iteración {indice} — Fase {fase}\n" + "-" * 40 + "\n"
-        if fase == 2 and indice > 0 and historial[indice-1]["fase"] == 1:
-            texto += "¡Transición a Fase 2!\nLas variables artificiales se excluyen del análisis.\n\n"
+        for indice, paso in enumerate(self.historial):
+            matriz, pivote, fase = paso["matriz"], paso["pivote"], paso["fase"]
+            basicas, nombres = paso["basicas"], paso["nombres"]
             
-        if not pivote:
-            texto += "Solución óptima alcanzada.\n"
-        else:
-            fila, col = pivote
-            texto += f"Entra: {nombres[col]} (columna {col})\n"
-            texto += f"Sale: {nombres[basicas[fila - 1]]} (Fila {fila})\n"
-            texto += f"Pivote = {matriz[fila, col]:.4f}\n"
+            # --- Generación dinámica del texto explicativo ---
+            texto = f"Iteración {indice} — Fase {fase}\n" + "-" * 40 + "\n"
             
-        textos.append(texto)
-    return textos
+            if fase == 2 and indice > 0 and self.historial[indice-1]["fase"] == 1:
+                texto += "¡Transición a Fase 2!\nLas variables artificiales se excluyen del análisis.\n\n"
+                
+            if not pivote:
+                texto += "Solución óptima alcanzada.\n"
+            else:
+                fila, col = pivote
+                texto += f"Entra: {nombres[col]} (columna {col})\n"
+                texto += f"Sale: {nombres[basicas[fila - 1]]} (Fila {fila})\n"
+                texto += f"Elemento Pivote = {matriz[fila, col]:.4f}\n"
+            
+            # --- Generación de la tabla gráfica ---
+            figura = graficar_tableau(matriz, pivote, fase, basicas, nombres)
+            
+            pasos_estandarizados.append({
+                "texto": texto,
+                "figura": figura,
+                "titulo": f"Método Simplex - Fase {fase}"
+            })
+            
+        return pasos_estandarizados
+
+
