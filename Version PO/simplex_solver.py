@@ -159,7 +159,9 @@ class SimplexModel:
         return self.historial
 
 
-
+# =====================================================================
+# FACHADA Y MÉTODOS DE PRESENTACIÓN (Single Responsibility Principle)
+# =====================================================================
 
 def simplex_solver(restrictions, objective_coefficients, optimization_type="max", iteration=0):
     """

@@ -15,8 +15,9 @@ matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
-from graphic_solver import graphic_solver, generate_explanation_steps
-from simplex_solver import simplex_solver, graficar_tableau, generateSimplexSteps
+# --- Importación de las nuevas Clases ---
+from graphic_solver import GraphicSolver
+from simplex_solver import SimplexModel, graficar_tableau, generateSimplexSteps
 
 # Constantes de Estilo
 COLOR_FONDO, COLOR_TARJETA, COLOR_PRIMARIO = "#f4f6f8", "#ffffff", "#1a3c6e"
@@ -49,14 +50,12 @@ class AplicacionProgramacionLineal:
         self.textos_pasos = []
         self.paso_actual = 0
 
-        # Estado específico del método Simplex: lista de diccionarios con el historial
         self.pasos_simplex = []
         self.restricciones_actuales = None
         self.objetivo_actual = None
 
         self._configurar_estilos()
         self._construir_interfaz()
-        # Cargar modelo por defecto al iniciar
         self._regenerar_formulario(cargar_defecto=True)
 
     def _configurar_estilos(self):
@@ -90,9 +89,6 @@ class AplicacionProgramacionLineal:
         self._construir_panel_izquierdo(contenedor)
         self._construir_panel_derecho(contenedor)
 
-    # =========================================================
-    # CONSTRUCCIÓN DEL PANEL IZQUIERDO (Formulario)
-    # =========================================================
     def _construir_panel_izquierdo(self, padre):
         panel = ttk.Frame(padre, style="TFrame")
         panel.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
@@ -144,7 +140,6 @@ class AplicacionProgramacionLineal:
         frame_fila_obj = ttk.Frame(self.tarjeta_objetivo, style="Tarjeta.TFrame")
         frame_fila_obj.pack(fill="x", pady=(0, 10))
         ttk.Label(frame_fila_obj, text="Z =", style="Tarjeta.TLabel").pack(side="left", padx=(0, 6))
-        # Zona desplazable: si hay muchas variables, aparece un slider para navegar entre ellas.
         self.frame_obj_vars = self._crear_fila_desplazable(frame_fila_obj)
 
         frame_tipo = ttk.Frame(self.tarjeta_objetivo, style="Tarjeta.TFrame")
@@ -216,7 +211,6 @@ class AplicacionProgramacionLineal:
 
     def _regenerar_formulario(self, cargar_defecto=False):
         for widget in self.frame_obj_vars.winfo_children(): widget.destroy()
-
         for fila in self.filas_restricciones: fila["frame"].destroy()
         self.filas_restricciones.clear()
 
@@ -264,9 +258,6 @@ class AplicacionProgramacionLineal:
         else:
             messagebox.showinfo("Aviso", "Debe existir al menos una restricción.")
 
-    # =========================================================
-    # CONSTRUCCIÓN DEL PANEL DERECHO (Resultados)
-    # =========================================================
     def _construir_panel_derecho(self, padre):
         panel = ttk.Frame(padre, style="TFrame")
         panel.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
@@ -294,9 +285,6 @@ class AplicacionProgramacionLineal:
         self.boton_siguiente = ttk.Button(panel_exp, text="Siguiente Paso ➡", style="Siguiente.TButton", command=self._avanzar_paso, state="disabled")
         self.boton_siguiente.pack(fill="x", pady=(10, 0))
 
-    # =========================================================
-    # LÓGICA DE SOLUCIÓN Y PASOS
-    # =========================================================
     def _leer_datos(self):
         c_obj = [float(e.get()) for e in self.entradas_objetivo]
         rest = [([float(e.get()) for e in f["coeficientes"]], f["signo"].get(), float(f["constante"].get())) for f in self.filas_restricciones]
@@ -319,61 +307,36 @@ class AplicacionProgramacionLineal:
         c1 = c_obj[0]
         c2 = c_obj[1] if len(c_obj) > 1 else 0
             
-        rest_2d = []
-        for r in rest:
-            coeficientes = r[0]
-            operador = r[1]
-            constante = r[2]
-            
-            a = coeficientes[0]
-            b = coeficientes[1] if len(coeficientes) > 1 else 0
-            rest_2d.append((a, b, operador, constante))
+        # Formatear restricciones para el GraphicSolver
+        rest_2d = [(r[0][0], r[0][1] if len(r[0]) > 1 else 0, r[1], r[2]) for r in rest]
 
         try:
-            vertices_raw, mejor_val_raw, fig = graphic_solver(rest_2d, c1, c2, self.tipo_optimizacion.get())
+            # Uso de la nueva clase GraphicSolver
+            modelo = GraphicSolver(rest_2d, c1, c2, self.tipo_optimizacion.get())
+            modelo.resolver()
         except ValueError as e:
             self.lbl_grafico_vacio.place(relx=0.5, rely=0.5, anchor="center")
             return messagebox.showerror("Sin solución", str(e))
         
-        vertices = [(float(x), float(y)) for x, y in vertices_raw]
-        mejor_val = (float(mejor_val_raw[0]), float(mejor_val_raw[1]), float(mejor_val_raw[2]))
-
-        self._renderizar_canvas(fig)
-        self.textos_pasos = generate_explanation_steps(vertices, mejor_val, c1, c2, self.tipo_optimizacion.get())
+        fig = modelo.plot_solution()
+        self.textos_pasos = modelo.generate_steps()
         
+        self._renderizar_canvas(fig)
         self.boton_siguiente.configure(state="normal")
         self._avanzar_paso()
 
     def _procesar_simplex(self, c_obj, rest):
-        pasos = []
-        iteracion = 0
-        while True:
-            try:
-                # Ahora desempacamos las 5 variables devueltas por la nueva versión de simplex_solver
-                matriz, pivote, fase, basicas, nombres = simplex_solver(rest, c_obj, self.tipo_optimizacion.get(), iteracion)
-            except ValueError as e:
-                return messagebox.showerror("Sin solución", str(e))
+        try:
+            # Uso de la nueva clase SimplexModel
+            # Esto elimina el bucle 'while True' de la interfaz
+            modelo = SimplexModel(rest, c_obj, self.tipo_optimizacion.get())
+            self.pasos_simplex = modelo.resolver()
+        except ValueError as e:
+            return messagebox.showerror("Sin solución", str(e))
 
-            # Almacenamos el paso actual como diccionario para que generateSimplexSteps lo procese correctamente
-            paso_dict = {
-                "matriz": matriz,
-                "pivote": pivote,
-                "fase": fase,
-                "basicas": basicas,
-                "nombres": nombres
-            }
-            pasos.append(paso_dict)
-            
-            if pivote is None:
-                break
-            iteracion += 1
-
-        self.pasos_simplex = pasos
         self.restricciones_actuales = rest
         self.objetivo_actual = c_obj
-        
-        # Le pasamos la lista de diccionarios (el historial esperado)
-        self.textos_pasos = generateSimplexSteps(pasos)
+        self.textos_pasos = generateSimplexSteps(self.pasos_simplex)
 
         self.boton_siguiente.configure(state="normal")
         self._avanzar_paso()
@@ -383,10 +346,8 @@ class AplicacionProgramacionLineal:
             return
 
         if self.metodo_solucion.get() == "simplex":
-            # Extraemos el diccionario del historial guardado
             paso = self.pasos_simplex[self.paso_actual]
             
-            # Llamada limpia enviando las 5 variables a la nueva versión de graficar_tableau
             fig = graficar_tableau(
                 paso["matriz"], 
                 paso["pivote"], 
@@ -419,7 +380,6 @@ class AplicacionProgramacionLineal:
         canvas_grafico.get_tk_widget().pack(fill="both", expand=True)
         plt.close(fig)
 
-           
     def _limpiar_resultados(self):
         for widget in self.panel_grafico.winfo_children():
             if widget != self.lbl_grafico_vacio: widget.destroy()
