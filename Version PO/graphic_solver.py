@@ -38,62 +38,48 @@ class GraphicSolver:
         self._calculate_optimal()
 
     def _find_vertices(self):
-        """
-        Calcula los vértices válidos de la región factible para el método gráfico.
-        Encuentra las intersecciones de todas las rectas y filtra los puntos 
-        que no cumplen con el sistema de inecuaciones.
-        """
-        ecuaciones_rectas = []
-        
-        for a, b, operador, c in self.restrictions:
-            ecuaciones_rectas.append((a, b, c))
-
-        # Añadimos las restricciones de no negatividad (x >= 0, y >= 0)
-        ecuaciones_rectas.append((1, 0, 0))
-        ecuaciones_rectas.append((0, 1, 0))
+        # Rectas a intersectar: las de las restricciones + los ejes x=0, y=0
+        rectas = [(a, b, c) for a, b, _operador, c in self.restrictions]
+        rectas.append((1, 0, 0))  # eje: x = 0
+        rectas.append((0, 1, 0))  # eje: y = 0
 
         vertices_validos = set()
-        pares_de_rectas = combinations(ecuaciones_rectas, 2)
 
-        for recta_1, recta_2 in pares_de_rectas:
-            a1, b1, c1 = recta_1
-            a2, b2, c2 = recta_2
+        # 2. Intersectar cada par de rectas para obtener posibles vértices.
+        for (a1, b1, c1), (a2, b2, c2) in combinations(rectas, 2):
 
+            # Resolver el sistema 2x2: a1*x + b1*y = c1 ; a2*x + b2*y = c2
             try:
-                matriz_coeficientes = [[a1, b1], [a2, b2]]
-                terminos_independientes = [c1, c2]
-                x, y = np.linalg.solve(matriz_coeficientes, terminos_independientes)
+                x, y = np.linalg.solve([[a1, b1], [a2, b2]], [c1, c2])
             except np.linalg.LinAlgError:
-                continue
+                continue  
 
-            x = round(x, 4)
-            y = round(y, 4)
+            x, y = round(x, 4), round(y, 4)
 
+            # Descartar puntos fuera del primer cuadrante.
             if x < 0 or y < 0:
                 continue
 
-            cumple_todas_las_restricciones = True
+            es_vertice_valido = True
 
             for a, b, operador, c in self.restrictions:
                 valor_evaluado = round((a * x) + (b * y), 4)
 
-                if operador == "<=":
-                    if valor_evaluado > c:
-                        cumple_todas_las_restricciones = False
-                        break
-                elif operador == ">=":
-                    if valor_evaluado < c:
-                        cumple_todas_las_restricciones = False
-                        break
-                elif operador == "=":
-                    if valor_evaluado != c:
-                        cumple_todas_las_restricciones = False
-                        break
+                incumple = (
+                    (operador == "<=" and valor_evaluado > c) or
+                    (operador == ">=" and valor_evaluado < c) or
+                    (operador == "=" and valor_evaluado != c)
+                )
 
-            if cumple_todas_las_restricciones:
+                if incumple:
+                    es_vertice_valido = False
+                    break
+
+            if es_vertice_valido:
                 vertices_validos.add((x, y))
 
         self.vertices = list(vertices_validos)
+
 
     def _calculate_optimal(self):
         """Evalúa la función objetivo en los vértices para encontrar el óptimo."""

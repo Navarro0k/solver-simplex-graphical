@@ -32,39 +32,60 @@ class SimplexModel:
         self._construir_matriz_y_nombres(restrictions)
 
     def _construir_matriz_y_nombres(self, restrictions):
-        """Asigna los coeficientes iniciales, holguras, excesos y variables artificiales."""
-        self.nombres = [f"x{i+1}" for i in range(self.num_variables)]
+        """
+        Asigna los coeficientes iniciales, holguras, excesos y variables artificiales 
+        a la tabla Simplex.
+        """
+        self.nombres = []
+        for i in range(self.num_variables):
+            self.nombres.append(f"x{i+1}")
+            
         nombres_holgura = []
         nombres_artificiales = []
-        col_artificial_actual = self.indice_inicio_artificiales
+        columna_artificial_actual = self.indice_inicio_artificiales
 
-        for i, (coeficientes, operador, lado_derecho) in enumerate(restrictions):
-            if lado_derecho < 0:
+        for indice_restriccion, (coeficientes, operador, termino_independiente) in enumerate(restrictions):
+            
+            # Si el término independiente es negativo, se multiplica la restricción por -1
+            if termino_independiente < 0:
                 coeficientes = [-c for c in coeficientes]
-                lado_derecho = -lado_derecho
-                operador = ">=" if operador == "<=" else "<="
+                termino_independiente = -termino_independiente
+                
+                if operador == "<=":
+                    operador = ">="
+                elif operador == ">=":
+                    operador = "<="
 
-            fila = i + 1
-            self.tableau[fila, :len(coeficientes)] = coeficientes
-            self.tableau[fila, -1] = lado_derecho
+            fila_matriz = indice_restriccion + 1
+            
+            # Asignar los pesos de las variables (aij) y la constante (bi)
+            self.tableau[fila_matriz, :len(coeficientes)] = coeficientes
+            self.tableau[fila_matriz, -1] = termino_independiente
 
-            col_holgura_exceso = self.num_variables + i
+            columna_holgura_exceso = self.num_variables + indice_restriccion
             
             if operador == "<=":
-                self.tableau[fila, col_holgura_exceso] = 1
-                self.variables_basicas[i] = col_holgura_exceso
-                nombres_holgura.append(f"s{i+1}")
+                # Restricción <= : Se suma una variable de holgura (s)
+                self.tableau[fila_matriz, columna_holgura_exceso] = 1
+                self.variables_basicas[indice_restriccion] = columna_holgura_exceso
+                
+                nombres_holgura.append(f"s{indice_restriccion + 1}")
                 
             elif operador == ">=":
-                self.tableau[fila, col_holgura_exceso] = -1 
-                self.tableau[fila, col_artificial_actual] = 1 
-                self.variables_basicas[i] = col_artificial_actual
-                col_artificial_actual += 1
-                nombres_holgura.append(f"e{i+1}")
-                nombres_artificiales.append(f"a{i+1}")
+                # Restricción >= : Se resta exceso (e) y se suma artificial (a)
+                self.tableau[fila_matriz, columna_holgura_exceso] = -1 
+                self.tableau[fila_matriz, columna_artificial_actual] = 1 
+                self.variables_basicas[indice_restriccion] = columna_artificial_actual
+                
+                columna_artificial_actual += 1
+                
+                nombres_holgura.append(f"e{indice_restriccion + 1}")
+                nombres_artificiales.append(f"a{indice_restriccion + 1}")
 
-        self.nombres.extend(nombres_holgura + nombres_artificiales + ["RHS"])
-
+        self.nombres.extend(nombres_holgura)
+        self.nombres.extend(nombres_artificiales)
+        self.nombres.append("RHS")
+    
     def _encontrar_columna_pivote(self, fase):
         """Busca el coeficiente más negativo en la función objetivo."""
         fila_z = self.tableau[0, :-1].copy()
@@ -79,13 +100,13 @@ class SimplexModel:
 
     def _encontrar_fila_pivote(self, columna_pivote):
         """Aplica la prueba de la razón mínima para determinar la variable que sale."""
-        lado_derecho = self.tableau[1:, -1]
+        coeficiente_restriccion = self.tableau[1:, -1]
         valores_columna = self.tableau[1:, columna_pivote]
 
         razones = []
         for i in range(self.num_restricciones):
             if valores_columna[i] > 0:
-                razones.append(lado_derecho[i] / valores_columna[i])
+                razones.append(coeficiente_restriccion[i] / valores_columna[i])
             else:
                 razones.append(np.inf)
 
@@ -95,7 +116,6 @@ class SimplexModel:
         return int(np.argmin(razones)) + 1
 
     def _ejecutar_pivote(self, fila_pivote, columna_pivote):
-        """Operación elemental de fila (Gauss-Jordan)."""
         self.variables_basicas[fila_pivote - 1] = columna_pivote
         self.tableau[fila_pivote, :] /= self.tableau[fila_pivote, columna_pivote]
         for i in range(self.tableau.shape[0]):
@@ -117,7 +137,6 @@ class SimplexModel:
         })
 
     def _fase1(self):
-        """Minimiza las variables artificiales para encontrar una solución básica factible."""
         for i, col_basica in enumerate(self.variables_basicas):
             if col_basica >= self.indice_inicio_artificiales:
                 self.tableau[0, col_basica] = 1
@@ -204,3 +223,38 @@ class SimplexModel:
         return pasos_estandarizados
 
 
+
+# Función auxiliar de diseño gráfico 
+
+def graficar_tableau(matriz, pivote, fase, basicas, nombres):
+    indices_mantener = [i for i, nom in enumerate(nombres) if not (fase == 2 and nom.startswith('a'))]
+    etiquetas_columnas = [nombres[i] for i in indices_mantener]
+    
+    matriz_filtrada = matriz[:, indices_mantener]
+    etiquetas_filas = ["Z"] + [nombres[b] for b in basicas]
+    texto_celdas = [[f"{v:.2f}" for v in fila] for fila in matriz_filtrada]
+
+    fig, ax = plt.subplots(figsize=(min(1.3 * len(etiquetas_columnas), 10), 0.6 * matriz_filtrada.shape[0] + 1.5))
+    ax.axis("off")
+
+    tabla = ax.table(cellText=texto_celdas, colLabels=etiquetas_columnas, rowLabels=etiquetas_filas, cellLoc="center", loc="center")
+    tabla.set_fontsize(10)
+    tabla.scale(1, 1.6)
+
+    if pivote:
+        fila_pivote, columna_pivote = pivote
+        if columna_pivote in indices_mantener:
+            celda = tabla[(fila_pivote + 1, indices_mantener.index(columna_pivote))]
+            celda.set_facecolor("#ffd54f")
+            celda.set_edgecolor("black")
+            celda.set_linewidth(2)
+    else:
+        indice_rhs = len(etiquetas_columnas) - 1
+        for i, etiqueta in enumerate(etiquetas_filas):
+            if etiqueta.startswith("x") or etiqueta == "Z":
+                tabla[(i + 1, -1)].set_facecolor("#a1f0a3")
+                tabla[(i + 1, indice_rhs)].set_facecolor("#a1f0a3")
+
+    ax.set_title(f"Fase {fase} — {'Solución óptima' if not pivote else 'Elemento pivote resaltado'}", fontsize=12, fontweight="bold", color="#1a3c6e")
+    fig.tight_layout()
+    return fig

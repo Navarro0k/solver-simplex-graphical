@@ -1,0 +1,112 @@
+<mxfile host="Electron">
+  <diagram name="Página-1" id="1H91pGhE48g1trrXLdXy">
+    <mxGraphModel dx="2637" dy="1043" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="SccuimWeTIA5g81pG1KY-1" parent="1" style="swimlane;fontStyle=0;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=55;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;whiteSpace=wrap;" value="&lt;b&gt;LinearProblem&lt;/b&gt;" vertex="1">
+          <mxGeometry height="263" width="230" x="90" y="157" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-2" parent="SccuimWeTIA5g81pG1KY-1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;" value="attributes" vertex="1">
+          <mxGeometry height="20" width="230" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-3" parent="SccuimWeTIA5g81pG1KY-1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;" value="        +list objective_coefficients&lt;br&gt;        +list restrictions&lt;br&gt;        +str optimization_type&lt;div&gt;&lt;br/&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="83" width="230" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-6" parent="SccuimWeTIA5g81pG1KY-1" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;" value="" vertex="1">
+          <mxGeometry height="8" width="230" y="158" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-7" parent="SccuimWeTIA5g81pG1KY-1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;" value="operations" vertex="1">
+          <mxGeometry height="20" width="230" y="166" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-8" parent="SccuimWeTIA5g81pG1KY-1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;" value="+__init__(objective_coefficients, restrictions, optimization_type)" vertex="1">
+          <mxGeometry height="77" width="230" y="186" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-10" parent="1" style="swimlane;fontStyle=0;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=55;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;whiteSpace=wrap;" value="GraphicSolver" vertex="1">
+          <mxGeometry height="340" width="230" x="-370" y="101.5" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-11" parent="SccuimWeTIA5g81pG1KY-10" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;" value="attributes" vertex="1">
+          <mxGeometry height="20" width="230" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-12" parent="SccuimWeTIA5g81pG1KY-10" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;" value="&lt;div&gt;+LinearProblem problem&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+str optimization_type&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+list vertices&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+tuple best_value&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+float c1&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+float c2&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+list restrictions&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="125" width="230" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-13" parent="SccuimWeTIA5g81pG1KY-10" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;" value="" vertex="1">
+          <mxGeometry height="8" width="230" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-14" parent="SccuimWeTIA5g81pG1KY-10" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;" value="operations" vertex="1">
+          <mxGeometry height="20" width="230" y="208" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-15" parent="SccuimWeTIA5g81pG1KY-10" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;" value="+__init__(problem)&amp;nbsp;&lt;div&gt;&amp;nbsp;+resolver()&amp;nbsp;&lt;/div&gt;&lt;div&gt;&amp;nbsp;-_find_vertices()&amp;nbsp;&lt;/div&gt;&lt;div&gt;&amp;nbsp;-_calculate_optimal()&amp;nbsp;&lt;/div&gt;&lt;div&gt;&amp;nbsp;-_plot_solution()&amp;nbsp;&lt;/div&gt;&lt;div&gt;&amp;nbsp;+obtener_pasos_ui()&lt;/div&gt;" vertex="1">
+          <mxGeometry height="112" width="230" y="228" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-16" parent="1" style="swimlane;fontStyle=0;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=55;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;whiteSpace=wrap;" value="SimplexModel" vertex="1">
+          <mxGeometry height="440" width="300" x="70" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-17" parent="SccuimWeTIA5g81pG1KY-16" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;" value="attributes" vertex="1">
+          <mxGeometry height="20" width="300" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-18" parent="SccuimWeTIA5g81pG1KY-16" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;" value="&lt;div&gt;+LinearProblem problem&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+int num_restricciones&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+int num_variables&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+str optimization_type&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+list objective_coefficients&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+int num_artificiales&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+int indice_inicio_artificiales&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+ndarray tableau&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+list variables_basicas&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+list historial&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+list nombres&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="181" width="300" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-19" parent="SccuimWeTIA5g81pG1KY-16" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;" value="" vertex="1">
+          <mxGeometry height="8" width="300" y="256" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-20" parent="SccuimWeTIA5g81pG1KY-16" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;" value="operations" vertex="1">
+          <mxGeometry height="20" width="300" y="264" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-21" parent="SccuimWeTIA5g81pG1KY-16" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;" value="+__init__(problem)&amp;nbsp;&lt;div&gt;&amp;nbsp;-_construir_matriz_y_nombres(restrictions)&lt;br/&gt;        -_encontrar_columna_pivote(fase)&lt;br/&gt;        -_encontrar_fila_pivote(columna_pivote)&lt;br/&gt;        -_ejecutar_pivote(fila_pivote, columna_pivote)&lt;br/&gt;        -_guardar_estado(fase, pivote)&lt;br/&gt;        -_fase1()&lt;br/&gt;        -_fase2()&lt;br/&gt;        +resolver()&lt;br/&gt;        +obtener_pasos_ui()&lt;/div&gt;" vertex="1">
+          <mxGeometry height="156" width="300" y="284" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-22" parent="1" style="swimlane;fontStyle=0;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=55;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;whiteSpace=wrap;" value="AplicacionProgramacionLineal" vertex="1">
+          <mxGeometry height="640" width="310" x="640" y="101.5" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-23" parent="SccuimWeTIA5g81pG1KY-22" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;" value="attributes" vertex="1">
+          <mxGeometry height="20" width="310" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-24" parent="SccuimWeTIA5g81pG1KY-22" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;" value="&amp;nbsp;+Tk root&amp;nbsp;&lt;div&gt;&amp;nbsp;+IntVar num_variables&amp;nbsp;&lt;/div&gt;&lt;div&gt;&amp;nbsp;+StringVar metodo_solucion&amp;nbsp;&lt;/div&gt;&lt;div&gt;&amp;nbsp;+StringVar tipo_optimizacion&amp;nbsp;&lt;/div&gt;&lt;div&gt;&amp;nbsp;+list entradas_objetivo&amp;nbsp;&lt;/div&gt;&lt;div&gt;&amp;nbsp;+list filas_restricciones&amp;nbsp;&lt;/div&gt;&lt;div&gt;&amp;nbsp;+list pasos_ui&amp;nbsp;&lt;/div&gt;&lt;div&gt;&amp;nbsp;+int paso_actual&amp;nbsp;&lt;/div&gt;&lt;div&gt;&amp;nbsp;+LinearProblem problema_actual&lt;/div&gt;" vertex="1">
+          <mxGeometry height="181" width="310" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-25" parent="SccuimWeTIA5g81pG1KY-22" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;" value="" vertex="1">
+          <mxGeometry height="8" width="310" y="256" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-26" parent="SccuimWeTIA5g81pG1KY-22" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;" value="operations" vertex="1">
+          <mxGeometry height="20" width="310" y="264" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-27" parent="SccuimWeTIA5g81pG1KY-22" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;" value="&amp;nbsp;-_configurar_estilos()&lt;br&gt;        -_construir_interfaz()&lt;br&gt;        -_construir_panel_izquierdo(padre)&lt;br&gt;        -_crear_scroll(padre)&lt;br&gt;        -_crear_tarjeta(titulo)&lt;br&gt;        -_crear_seccion_variables()&lt;br&gt;        -_crear_seccion_objetivo()&lt;br&gt;        -_crear_seccion_restricciones()&lt;br&gt;        -_crear_seccion_metodo()&lt;br&gt;        -_crear_entradas_variables(contenedor, valores_defecto)&lt;br&gt;        -_crear_fila_desplazable(padre, alto)&lt;br&gt;        -_regenerar_formulario(cargar_defecto)&lt;br&gt;        -_agregar_fila_restriccion(coefs, signo, cte_val)&lt;br&gt;        -_quitar_fila_restriccion(fila)&lt;br&gt;        -_construir_panel_derecho(padre)&lt;br&gt;        -_leer_datos()&lt;br&gt;        -_resolver()&lt;br&gt;        -_avanzar_paso()&lt;br&gt;        -_renderizar_canvas(fig)&lt;br&gt;        -_limpiar_resultados()&lt;br&gt;        -_mostrar_texto_simple(texto)" vertex="1">
+          <mxGeometry height="356" width="310" y="284" as="geometry" />
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-31" edge="1" parent="1" source="SccuimWeTIA5g81pG1KY-16" style="endArrow=open;startArrow=none;endFill=0;startFill=0;endSize=8;html=1;verticalAlign=bottom;labelBackgroundColor=none;strokeWidth=1;rounded=0;exitX=0.47;exitY=0;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.526;entryY=0.992;entryDx=0;entryDy=0;entryPerimeter=0;edgeStyle=orthogonalEdgeStyle;" target="SccuimWeTIA5g81pG1KY-8" value="">
+          <mxGeometry relative="1" width="160" as="geometry">
+            <mxPoint x="280" y="510" as="sourcePoint" />
+            <mxPoint x="440" y="510" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-32" edge="1" parent="1" source="SccuimWeTIA5g81pG1KY-12" style="endArrow=open;startArrow=none;endFill=0;startFill=0;endSize=8;html=1;verticalAlign=bottom;labelBackgroundColor=none;strokeWidth=1;rounded=0;exitX=1.006;exitY=0.214;exitDx=0;exitDy=0;exitPerimeter=0;edgeStyle=orthogonalEdgeStyle;" value="">
+          <mxGeometry relative="1" width="160" as="geometry">
+            <mxPoint x="410" y="260" as="sourcePoint" />
+            <mxPoint x="87.93" y="203.3" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-33" edge="1" parent="1" source="SccuimWeTIA5g81pG1KY-24" style="endArrow=block;startArrow=none;endFill=0;startFill=0;endSize=8;html=1;verticalAlign=bottom;dashed=1;labelBackgroundColor=none;rounded=0;exitX=-0.008;exitY=0.047;exitDx=0;exitDy=0;exitPerimeter=0;edgeStyle=orthogonalEdgeStyle;" value="">
+          <mxGeometry relative="1" width="160" as="geometry">
+            <mxPoint x="400" y="460" as="sourcePoint" />
+            <mxPoint x="320.69" y="185" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-34" edge="1" parent="1" source="SccuimWeTIA5g81pG1KY-22" style="endArrow=block;startArrow=none;endFill=0;startFill=0;endSize=8;html=1;verticalAlign=bottom;dashed=1;labelBackgroundColor=none;rounded=0;entryX=1;entryY=0.054;entryDx=0;entryDy=0;entryPerimeter=0;exitX=-0.008;exitY=0.029;exitDx=0;exitDy=0;exitPerimeter=0;edgeStyle=orthogonalEdgeStyle;" target="SccuimWeTIA5g81pG1KY-10" value="">
+          <mxGeometry relative="1" width="160" as="geometry">
+            <mxPoint x="370" y="60" as="sourcePoint" />
+            <mxPoint x="530" y="60" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="SccuimWeTIA5g81pG1KY-35" edge="1" parent="1" source="SccuimWeTIA5g81pG1KY-24" style="endArrow=block;startArrow=none;endFill=0;startFill=0;endSize=8;html=1;verticalAlign=bottom;dashed=1;labelBackgroundColor=none;rounded=0;exitX=0.004;exitY=0.135;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1.001;entryY=0.057;entryDx=0;entryDy=0;entryPerimeter=0;edgeStyle=orthogonalEdgeStyle;" target="SccuimWeTIA5g81pG1KY-16" value="">
+          <mxGeometry relative="1" width="160" as="geometry">
+            <mxPoint x="430" y="590" as="sourcePoint" />
+            <mxPoint x="590" y="590" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
