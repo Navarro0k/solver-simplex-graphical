@@ -144,13 +144,6 @@ class SimplexModel:
             if not pivote:
                 texto += "Solución óptima alcanzada.\n"
 
-                if np.any(matriz[1:, -1] < -1e-7):
-                    texto += (
-                        "Advertencia: aún hay valores negativos en el CR. "
-                        "El método Simplex común no garantiza una solución "
-                        "factible cuando hay restricciones '>='; para esos "
-                        "casos se recomienda el método de Dos Fases.\n"
-                    )
             else:
                 fila, columna = pivote
                 texto += f"Entra: {nombres[columna]} (columna {columna})\n"
