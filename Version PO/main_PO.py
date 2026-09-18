@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 from problem import LinearProblem
 from graphic_solver import GraphicSolver
 from simplex_solver import SimplexModel
+from simplex_solver_two_phases import SimplexModelDosFases
 
 # Constantes de Estilo
 COLOR_FONDO, COLOR_TARJETA, COLOR_PRIMARIO = "#f4f6f8", "#ffffff", "#1a3c6e"
@@ -333,9 +334,13 @@ class AplicacionProgramacionLineal:
             # responden al mismo contrato (resolver -> obtener_pasos_ui)
             if self.metodo_solucion.get() == "grafico":
                 modelo = GraphicSolver(problema)
+            elif self.tipo_optimizacion.get() == "min":
+                # El método Simplex común ya no admite Min -> se usa Dos Fases
+                modelo = SimplexModelDosFases(problema)
             else:
+                # Maximizar -> método Simplex común (una sola fase)
                 modelo = SimplexModel(problema)
-                
+
             modelo.resolver()
             self.pasos_ui = modelo.obtener_pasos_ui()
 
