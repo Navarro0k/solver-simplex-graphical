@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from problem import LinearProblem
+from model.problem import LinearProblem
 
 class SimplexModelDosFases:
     """

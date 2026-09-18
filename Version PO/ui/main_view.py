@@ -1,27 +1,9 @@
-"""
-Interfaz gráfica para el solucionador de Programación Lineal.
-Carga por defecto el problema:
-    Max Z = 2x₁ + x₂
-    s.a.
-        x₁ ≥ 3          ->  1x₁ + 0x₂ ≥ 3
-        x₂ - 2x₁ ≥ 0    -> -2x₁ + 1x₂ ≥ 0
-        40x₁ + 30x₂ ≤ 600
-"""
-
 import tkinter as tk
 from tkinter import ttk, messagebox
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
-
-# --- Importación de las Clases ---
-# Ya no necesitamos importar funciones de dibujo del simplex, 
-# las clases se encargan de todo internamente.
-from problem import LinearProblem
-from graphic_solver import GraphicSolver
-from simplex_solver import SimplexModel
-from simplex_solver_two_phases import SimplexModelDosFases
 
 # Constantes de Estilo
 COLOR_FONDO, COLOR_TARJETA, COLOR_PRIMARIO = "#f4f6f8", "#ffffff", "#1a3c6e"
@@ -35,27 +17,25 @@ FUENTES = {
 SUBINDICES = ["₁", "₂", "₃", "₄", "₅", "₆"]
 MAX_VARIABLES = 6
 
-
-class AplicacionProgramacionLineal:
-    def __init__(self, root):
+class MainView:
+    def __init__(self, root, resolver_callback):
         self.root = root
+        self.resolver_callback = resolver_callback
+        
         self.root.title("Solucionador de Programación Lineal")
-        self.root.geometry("1200x800")
-        self.root.minsize(1050, 700)
+        self.root.geometry("1250x800")
+        self.root.minsize(1100, 700)
         self.root.configure(bg=COLOR_FONDO)
 
-        # Variables de estado
+        # Variables de estado UI
         self.num_variables = tk.IntVar(value=2)
         self.metodo_solucion = tk.StringVar(value="grafico")
         self.tipo_optimizacion = tk.StringVar(value="max")
         
         self.entradas_objetivo = []
         self.filas_restricciones = []
-        
-        # Nueva variable estandarizada para los pasos de cualquier solver
         self.pasos_ui = []
         self.paso_actual = 0
-        self.problema_actual = None
 
         self._configurar_estilos()
         self._construir_interfaz()
@@ -64,7 +44,6 @@ class AplicacionProgramacionLineal:
     def _configurar_estilos(self):
         estilo = ttk.Style()
         estilo.theme_use("clam")
-        
         configs = {
             "TFrame": {"background": COLOR_FONDO},
             "Tarjeta.TFrame": {"background": COLOR_TARJETA},
@@ -79,8 +58,8 @@ class AplicacionProgramacionLineal:
             "Siguiente.TButton": {"font": ("Segoe UI", 10, "bold"), "padding": 8},
             "TRadiobutton": {"background": COLOR_TARJETA, "font": FUENTES["base"]},
         }
-        for nombre, configuracion in configs.items():
-            estilo.configure(nombre, **configuracion)
+        for nombre, conf in configs.items():
+            estilo.configure(nombre, **conf)
 
     def _construir_interfaz(self):
         contenedor = ttk.Frame(self.root, style="TFrame")
@@ -108,7 +87,7 @@ class AplicacionProgramacionLineal:
         self._crear_seccion_restricciones()
         self._crear_seccion_metodo()
 
-        ttk.Button(panel, text="Resolver Modelo", style="Resolver.TButton", command=self._resolver).pack(fill="x", pady=(15, 0))
+        ttk.Button(panel, text="Resolver Modelo", style="Resolver.TButton", command=self._preparar_resolucion).pack(fill="x", pady=(15, 0))
 
     def _crear_scroll(self, padre):
         canvas = tk.Canvas(padre, bg=COLOR_FONDO, highlightthickness=0)
@@ -139,7 +118,6 @@ class AplicacionProgramacionLineal:
 
     def _crear_seccion_objetivo(self):
         self.tarjeta_objetivo = self._crear_tarjeta("2. Función objetivo")
-
         frame_fila_obj = ttk.Frame(self.tarjeta_objetivo, style="Tarjeta.TFrame")
         frame_fila_obj.pack(fill="x", pady=(0, 10))
         ttk.Label(frame_fila_obj, text="Z =", style="Tarjeta.TLabel").pack(side="left", padx=(0, 6))
@@ -159,35 +137,33 @@ class AplicacionProgramacionLineal:
 
     def _crear_seccion_metodo(self):
         tarjeta = self._crear_tarjeta("4. Método de solución")
-        self.radio_grafico = ttk.Radiobutton(tarjeta, text="Método Gráfico", value="grafico", variable=self.metodo_solucion)
-        self.radio_grafico.pack(side="left")
-        self.radio_simplex = ttk.Radiobutton(tarjeta, text="Método Simplex", value="simplex", variable=self.metodo_solucion)
-        self.radio_simplex.pack(side="left", padx=(20, 0))
+        frame_opciones = ttk.Frame(tarjeta, style="Tarjeta.TFrame")
+        frame_opciones.pack(fill="x", pady=(5, 0))
+        
+        self.radio_grafico = ttk.Radiobutton(frame_opciones, text="Método Gráfico", value="grafico", variable=self.metodo_solucion)
+        self.radio_grafico.grid(row=0, column=0, padx=(0, 15), pady=3, sticky="w")
+        self.radio_simplex = ttk.Radiobutton(frame_opciones, text="Simplex Común", value="simplex_comun", variable=self.metodo_solucion)
+        self.radio_simplex.grid(row=0, column=1, padx=(0, 15), pady=3, sticky="w")
+        self.radio_dos_fases = ttk.Radiobutton(frame_opciones, text="Simplex Dos Fases", value="simplex_dos_fases", variable=self.metodo_solucion)
+        self.radio_dos_fases.grid(row=1, column=0, padx=(0, 15), pady=3, sticky="w")
+        self.radio_gran_m = ttk.Radiobutton(frame_opciones, text="Simplex Gran M", value="simplex_gran_m", variable=self.metodo_solucion)
+        self.radio_gran_m.grid(row=1, column=1, padx=(0, 15), pady=3, sticky="w")
+
         self.etiqueta_aviso_metodo = ttk.Label(tarjeta, text="", style="Aviso.TLabel")
-        self.etiqueta_aviso_metodo.pack(side="left", padx=(15, 0))
+        self.etiqueta_aviso_metodo.pack(anchor="w", pady=(5, 0))
 
     def _crear_entradas_variables(self, contenedor, valores_defecto=None):
         entradas = []
         cantidad = self.num_variables.get()
-        
         for i in range(cantidad):
             entrada = ttk.Entry(contenedor, width=6, justify="center")
-            
-            # Reemplazo de operador ternario por if clásico
-            valor = "1"
-            if valores_defecto is not None:
-                if i < len(valores_defecto):
-                    valor = str(valores_defecto[i])
-                    
+            valor = str(valores_defecto[i]) if valores_defecto and i < len(valores_defecto) else "1"
             entrada.insert(0, valor)
             entrada.pack(side="left")
             ttk.Label(contenedor, text=f"x{SUBINDICES[i]}", style="Tarjeta.TLabel").pack(side="left", padx=(3, 4))
-            
             if i < cantidad - 1:
                 ttk.Label(contenedor, text="+", style="Tarjeta.TLabel").pack(side="left", padx=(0, 4))
-                
             entradas.append(entrada)
-            
         return entradas
 
     def _crear_fila_desplazable(self, padre, alto=34):
@@ -196,38 +172,27 @@ class AplicacionProgramacionLineal:
 
         canvas = tk.Canvas(contenedor, bg=COLOR_TARJETA, highlightthickness=0, height=alto)
         canvas.pack(side="top", fill="both", expand=True)
-
         frame_interno = ttk.Frame(canvas, style="Tarjeta.TFrame")
         id_ventana = canvas.create_window((0, 0), window=frame_interno, anchor="nw")
-
-        slider = ttk.Scale(contenedor, orient="horizontal", from_=0, to=1,
-                            command=lambda v: canvas.xview_moveto(float(v)))
+        slider = ttk.Scale(contenedor, orient="horizontal", from_=0, to=1, command=lambda v: canvas.xview_moveto(float(v)))
 
         def _actualizar_scroll(event=None):
             canvas.configure(scrollregion=canvas.bbox("all"))
             canvas.itemconfig(id_ventana, height=frame_interno.winfo_reqheight())
-            ancho_contenido = frame_interno.winfo_reqwidth()
-            ancho_visible = canvas.winfo_width()
-            if ancho_visible > 1 and ancho_contenido > ancho_visible:
-                if not slider.winfo_ismapped():
-                    slider.pack(side="top", fill="x", pady=(3, 0))
+            if canvas.winfo_width() > 1 and frame_interno.winfo_reqwidth() > canvas.winfo_width():
+                if not slider.winfo_ismapped(): slider.pack(side="top", fill="x", pady=(3, 0))
             else:
-                if slider.winfo_ismapped():
-                    slider.pack_forget()
+                if slider.winfo_ismapped(): slider.pack_forget()
                 canvas.xview_moveto(0)
 
         frame_interno.bind("<Configure>", _actualizar_scroll)
         canvas.bind("<Configure>", _actualizar_scroll)
         canvas.bind("<Shift-MouseWheel>", lambda e: canvas.xview_scroll(int(-e.delta / 60), "units"))
-
         return frame_interno
 
     def _regenerar_formulario(self, cargar_defecto=False):
-        for widget in self.frame_obj_vars.winfo_children(): 
-            widget.destroy()
-        for fila in self.filas_restricciones: 
-            fila["frame"].destroy()
-            
+        for w in self.frame_obj_vars.winfo_children(): w.destroy()
+        for f in self.filas_restricciones: f["frame"].destroy()
         self.filas_restricciones.clear()
 
         if cargar_defecto and self.num_variables.get() == 2:
@@ -240,29 +205,21 @@ class AplicacionProgramacionLineal:
             self.entradas_objetivo = self._crear_entradas_variables(self.frame_obj_vars)
             self._agregar_fila_restriccion()
         
-        es_multivariable = self.num_variables.get() > 2
-        
-        # Reemplazo de operadores ternarios en la configuración visual
-        estado_radio = "normal"
-        metodo_seleccionado = self.metodo_solucion.get()
-        texto_aviso = ""
-        
-        if es_multivariable:
-            estado_radio = "disabled"
-            metodo_seleccionado = "simplex"
-            texto_aviso = "Solo Simplex (>2 variables)."
+        if self.num_variables.get() > 2:
+            self.radio_grafico.configure(state="disabled")
+            if self.metodo_solucion.get() == "grafico": self.metodo_solucion.set("simplex_comun")
+            self.etiqueta_aviso_metodo.configure(text="Gráfico deshabilitado (>2 variables).")
+        else:
+            self.radio_grafico.configure(state="normal")
+            self.etiqueta_aviso_metodo.configure(text="")
             
-        self.radio_grafico.configure(state=estado_radio)
-        self.metodo_solucion.set(metodo_seleccionado)
-        self.etiqueta_aviso_metodo.configure(text=texto_aviso)
-            
-        self._limpiar_resultados()
+        self.limpiar_resultados()
 
     def _agregar_fila_restriccion(self, coefs=None, signo="<=", cte_val=0):
         frame = ttk.Frame(self.frame_filas_rest, style="Tarjeta.TFrame")
         frame.pack(fill="x", pady=3)
 
-        combo = ttk.Combobox(frame, values=["<=", ">="], width=4, state="readonly", justify="center")
+        combo = ttk.Combobox(frame, values=["<=", ">=", "="], width=4, state="readonly", justify="center")
         cte = ttk.Entry(frame, width=8, justify="center")
         fila = {"frame": frame, "coeficientes": [], "signo": combo, "constante": cte}
         boton_quitar = ttk.Button(frame, text="Quitar", command=lambda: self._quitar_fila_restriccion(fila))
@@ -275,7 +232,6 @@ class AplicacionProgramacionLineal:
 
         frame_vars = self._crear_fila_desplazable(frame)
         fila["coeficientes"] = self._crear_entradas_variables(frame_vars, valores_defecto=coefs)
-
         self.filas_restricciones.append(fila)
 
     def _quitar_fila_restriccion(self, fila):
@@ -294,7 +250,7 @@ class AplicacionProgramacionLineal:
 
         self.panel_grafico = ttk.Frame(panel, style="Tarjeta.TFrame")
         self.panel_grafico.grid(row=0, column=0, sticky="nsew", pady=(0, 10))
-        self.lbl_grafico_vacio = ttk.Label(self.panel_grafico, text="El gráfico se generará aquí.", style="Subtitulo.TLabel")
+        self.lbl_grafico_vacio = ttk.Label(self.panel_grafico, text="El gráfico o tableau se generará aquí.", style="Subtitulo.TLabel")
         self.lbl_grafico_vacio.place(relx=0.5, rely=0.5, anchor="center")
 
         panel_exp = ttk.Frame(panel, style="Tarjeta.TFrame", padding=15)
@@ -317,102 +273,63 @@ class AplicacionProgramacionLineal:
         rest = [([float(e.get()) for e in f["coeficientes"]], f["signo"].get(), float(f["constante"].get())) for f in self.filas_restricciones]
         return c_obj, rest
 
-    def _resolver(self):
+    def _preparar_resolucion(self):
         try:
             c_obj, rest = self._leer_datos()
         except ValueError:
             return messagebox.showerror("Error", "Revisa que todos los campos tengan números válidos.")
-
-        try:
-            problema = LinearProblem(c_obj, rest, self.tipo_optimizacion.get())
-        except ValueError as e:
-            return messagebox.showerror("Error", str(e))
-
-        self._limpiar_resultados()
-
-        try:
-            # responden al mismo contrato (resolver -> obtener_pasos_ui)
-            if self.metodo_solucion.get() == "grafico":
-                modelo = GraphicSolver(problema)
-            elif self.tipo_optimizacion.get() == "min":
-                # El método Simplex común ya no admite Min -> se usa Dos Fases
-                modelo = SimplexModelDosFases(problema)
-            else:
-                # Maximizar -> método Simplex común (una sola fase)
-                modelo = SimplexModel(problema)
-
-            modelo.resolver()
-            self.pasos_ui = modelo.obtener_pasos_ui()
-
-        except ValueError as e:
-            self.lbl_grafico_vacio.place(relx=0.5, rely=0.5, anchor="center")
-            return messagebox.showerror("Sin solución", str(e))
         
+        self.limpiar_resultados()
+        # Llamar al controlador
+        self.resolver_callback(c_obj, rest, self.tipo_optimizacion.get(), self.metodo_solucion.get())
+
+    def cargar_pasos(self, pasos):
+        self.pasos_ui = pasos
+        self.paso_actual = 0
         self.boton_siguiente.configure(state="normal")
         self._avanzar_paso()
 
     def _avanzar_paso(self):
-        # Protegemos contra desbordamientos
-        if self.paso_actual >= len(self.pasos_ui):
-            return
+        if self.paso_actual >= len(self.pasos_ui): return
 
-        # Obtenemos el diccionario con (texto, figura, titulo)
         paso = self.pasos_ui[self.paso_actual]
-
-        # 1. Título
         self.etiqueta_fase.configure(text=paso["titulo"])
 
-        # 2. Dibujo en Matplotlib (solo si el paso incluye figura nueva)
         if paso["figura"] is not None:
             self._renderizar_canvas(paso["figura"])
 
-        # 3. Texto en consola
-        self._mostrar_texto_simple(paso["texto"])
+        self.texto_explicacion.configure(state="normal")
+        self.texto_explicacion.delete("1.0", tk.END)
+        if paso["texto"]: self.texto_explicacion.insert(tk.END, paso["texto"])
+        self.texto_explicacion.see(tk.END)
+        self.texto_explicacion.configure(state="disabled")
 
-        # Avanzar puntero
         self.paso_actual += 1
-        
-        # Deshabilitar botón si llegamos al final
         if self.paso_actual >= len(self.pasos_ui):
             self.boton_siguiente.configure(state="disabled")
 
     def _renderizar_canvas(self, fig):
         self.lbl_grafico_vacio.place_forget()
         for widget in self.panel_grafico.winfo_children():
-            if widget != self.lbl_grafico_vacio:
-                widget.destroy()
+            if widget != self.lbl_grafico_vacio: widget.destroy()
 
         canvas_grafico = FigureCanvasTkAgg(fig, master=self.panel_grafico)
         canvas_grafico.draw()
         canvas_grafico.get_tk_widget().pack(fill="both", expand=True)
         plt.close(fig)
 
-    def _limpiar_resultados(self):
+    def limpiar_resultados(self):
         for widget in self.panel_grafico.winfo_children():
-            if widget != self.lbl_grafico_vacio: 
-                widget.destroy()
-        
+            if widget != self.lbl_grafico_vacio: widget.destroy()
         self.paso_actual = 0
         self.pasos_ui = []
-        self.problema_actual = None
-        
         self.etiqueta_fase.configure(text="")
         self.boton_siguiente.configure(state="disabled")
-        self._mostrar_texto_simple("")
-        self.lbl_grafico_vacio.place(relx=0.5, rely=0.5, anchor="center")
-
-    def _mostrar_texto_simple(self, texto):
         self.texto_explicacion.configure(state="normal")
         self.texto_explicacion.delete("1.0", tk.END)
-        
-        if texto: 
-            self.texto_explicacion.insert(tk.END, texto)
-            
-        self.texto_explicacion.see(tk.END)
         self.texto_explicacion.configure(state="disabled")
+        self.lbl_grafico_vacio.place(relx=0.5, rely=0.5, anchor="center")
 
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    AplicacionProgramacionLineal(root)
-    root.mainloop()
+    def mostrar_error(self, titulo, mensaje):
+        self.lbl_grafico_vacio.place(relx=0.5, rely=0.5, anchor="center")
+        messagebox.showerror(titulo, mensaje)
