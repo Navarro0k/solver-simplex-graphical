@@ -76,18 +76,17 @@ class SimplexModel:
         columna_pivote_valores = self.tableau[1:, columna_pivote]
 
         cocientes_validos = []
+        
         for i in range(self.num_restricciones):
             valor_cr = columna_cr[i]
             valor_columna = columna_pivote_valores[i]
 
-            if valor_cr < 0:
+            if valor_cr < 0 or valor_columna <= 0:
                 continue
 
-            if valor_columna <= 0:
-                continue
+            cociente = abs(valor_cr / valor_columna)
 
-            cociente = valor_cr / valor_columna
-            cocientes_validos.append((i, cociente))
+            cocientes_validos.append((cociente, i))
 
         if not cocientes_validos:
             raise ValueError(
@@ -95,7 +94,8 @@ class SimplexModel:
                 "variables artificiales / método de dos fases para esta tabla)."
             )
 
-        indice_fila, _ = min(cocientes_validos, key=lambda par: abs(par[1]))
+        _ , indice_fila = min(cocientes_validos)
+        
         return indice_fila + 1
 
     def _ejecutar_pivote(self, fila_pivote, columna_pivote):
