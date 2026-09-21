@@ -4,7 +4,6 @@ from ui.main_view import MainView
 from model.problem import LinearProblem
 from core.graphic_solver import GraphicSolver
 from core.simplex_solver import SimplexModel
-from core.simplex_solver_two_phases import SimplexModelDosFases
 from core.simple_solver_gran_m import SimplexModelGranM
 
 class ControladorProgramacionLineal:
@@ -29,8 +28,6 @@ class ControladorProgramacionLineal:
                 modelo = GraphicSolver(problema)
             elif metodo == "simplex_comun":
                 modelo = SimplexModel(problema)
-            elif metodo == "simplex_dos_fases":
-                modelo = SimplexModelDosFases(problema)
             elif metodo == "simplex_gran_m":
                 modelo = SimplexModelGranM(problema)
             else:

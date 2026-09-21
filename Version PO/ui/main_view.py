@@ -144,10 +144,8 @@ class MainView:
         self.radio_grafico.grid(row=0, column=0, padx=(0, 15), pady=3, sticky="w")
         self.radio_simplex = ttk.Radiobutton(frame_opciones, text="Simplex Común", value="simplex_comun", variable=self.metodo_solucion)
         self.radio_simplex.grid(row=0, column=1, padx=(0, 15), pady=3, sticky="w")
-        self.radio_dos_fases = ttk.Radiobutton(frame_opciones, text="Simplex Dos Fases", value="simplex_dos_fases", variable=self.metodo_solucion)
-        self.radio_dos_fases.grid(row=1, column=0, padx=(0, 15), pady=3, sticky="w")
         self.radio_gran_m = ttk.Radiobutton(frame_opciones, text="Simplex Gran M", value="simplex_gran_m", variable=self.metodo_solucion)
-        self.radio_gran_m.grid(row=1, column=1, padx=(0, 15), pady=3, sticky="w")
+        self.radio_gran_m.grid(row=1, column=0, padx=(0, 15), pady=3, sticky="w")
 
         self.etiqueta_aviso_metodo = ttk.Label(tarjeta, text="", style="Aviso.TLabel")
         self.etiqueta_aviso_metodo.pack(anchor="w", pady=(5, 0))
