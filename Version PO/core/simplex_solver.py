@@ -43,8 +43,6 @@ class SimplexModel:
                 coeficientes = [-c for c in coeficientes]
                 termino_independiente = -termino_independiente
                 operador = "<="
-            elif operador != "<=":
-                raise ValueError(f"Operador de restricción no soportado: {operador}")
 
             fila_matriz = indice_restriccion + 1
 
@@ -91,7 +89,7 @@ class SimplexModel:
         if not cocientes_validos:
             raise ValueError(
                 "No hay fila pivote válida (problema no acotado, o se requieren "
-                "variables artificiales / método de dos fases para esta tabla)."
+                "variables artificiales)."
             )
 
         _ , indice_fila = min(cocientes_validos)

@@ -67,8 +67,7 @@ class GraphicSolver:
 
                 incumple = (
                     (operador == "<=" and valor_evaluado > c) or
-                    (operador == ">=" and valor_evaluado < c) or
-                    (operador == "=" and valor_evaluado != c)
+                    (operador == ">=" and valor_evaluado < c)
                 )
 
                 if incumple:
@@ -144,10 +143,6 @@ class GraphicSolver:
         return fig
 
     def obtener_pasos_ui(self):
-        """
-        Empaqueta la solución del método gráfico en un formato estandarizado
-        (texto, figura, titulo) reemplazando la antigua lógica suelta.
-        """
         pasos = []
         figura_grafico = self._plot_solution()
         
@@ -162,7 +157,7 @@ class GraphicSolver:
         texto1 += f"Vértices encontrados:\n[{', '.join(vertices_limpios)}]\n\n"
         pasos.append({
             "texto": texto1,
-            "figura": figura_grafico, # Solo enviamos la figura en el primer paso
+            "figura": figura_grafico,
             "titulo": f"Método Gráfico ({self.optimization_type.upper()})"
         })
         

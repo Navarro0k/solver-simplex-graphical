@@ -46,10 +46,10 @@ class SimplexModelGranM:
         self.num_variables = len(self.objective_coefficients)
         self.num_restricciones = len(restrictions)
 
-        self.num_holguras_o_excesos = sum(1 for _, op, _ in restrictions if op in ("<=", ">="))
-        self.num_artificiales = sum(1 for _, op, _ in restrictions if op in (">=", "="))
+        self.num_holgura = sum(1 for _, op, _ in restrictions if op in ("<=", ">="))
+        self.num_artificiales = sum(1 for _, op, _ in restrictions if op in (">="))
 
-        total_columnas = self.num_variables + self.num_holguras_o_excesos + self.num_artificiales + 1
+        total_columnas = self.num_variables + self.num_holgura + self.num_artificiales + 1
 
         self.tableau = np.zeros((self.num_restricciones, total_columnas))
         self.variables_basicas = [0] * self.num_restricciones
@@ -66,7 +66,7 @@ class SimplexModelGranM:
             self.nombres.append(f"x{i + 1}")
             self.costo_numero[i] = self.objective_coefficients[i]
 
-        for i in range(self.num_holguras_o_excesos):
+        for i in range(self.num_holgura):
             self.nombres.append(f"s{i + 1}")
 
         for i in range(self.num_artificiales):
@@ -76,7 +76,7 @@ class SimplexModelGranM:
 
         signo_de_M = 1 if self.optimization_type != "max" else -1
         columna_holgura = self.num_variables
-        columna_artificial = self.num_variables + self.num_holguras_o_excesos
+        columna_artificial = self.num_variables + self.num_holgura
 
         for i in range(self.num_artificiales):
             self.costo_M[columna_artificial + i] = signo_de_M
@@ -220,7 +220,7 @@ class SimplexModelGranM:
 
         self._guardar_estado(pivote=None)
 
-        primera_columna_artificial = self.num_variables + self.num_holguras_o_excesos
+        primera_columna_artificial = self.num_variables + self.num_holgura
         for fila in range(self.num_restricciones):
             variable_basica = self.variables_basicas[fila]
             if variable_basica >= primera_columna_artificial and self.tableau[fila, -1] > 0:
